@@ -412,6 +412,30 @@ static void parse_generic_cmdline(struct cmd_context *ctx,
 	}
 }
 
+static int parse_sep_string_bitmap(char *arg, char sep, int base,
+				   u8 *bitmap, size_t size)
+{
+	unsigned int value, i;
+	const char *p;
+
+	memset(bitmap, 0, size);
+
+	p = strtok(arg, &sep);
+	while (p) {
+		if (sscanf(p, "%u", &value) != 1)
+			return -1;
+
+		i = value / 8;
+		if (i >= size)
+			return -1;
+
+		bitmap[i] |= 1 << (value % 8);
+		p = strtok(NULL, &sep);
+	}
+
+	return 0;
+}
+
 static void flag_to_cmdline_info(const char *name, u32 value,
 				 u32 *wanted, u32 *mask,
 				 struct cmdline_info *cli)
@@ -931,6 +955,9 @@ static int parse_wolopts(char *optstr, u32 *data)
 		case 's':
 			*data |= WAKE_MAGICSECURE;
 			break;
+		case 'f':
+			*data |= WAKE_FILTER;
+			break;
 		case 'd':
 			*data = 0;
 			break;
@@ -964,6 +991,8 @@ static char *unparse_wolopts(int wolopts)
 			*p++ = 'g';
 		if (wolopts & WAKE_MAGICSECURE)
 			*p++ = 's';
+		if (wolopts & WAKE_FILTER)
+			*p++ = 'f';
 	} else {
 		*p = 'd';
 	}
@@ -985,6 +1014,21 @@ static int dump_wol(struct ethtool_wolinfo *wol)
 		for (i = 0; i < SOPASS_MAX; i++) {
 			fprintf(stdout, "%s%02x", delim?":":"", wol->sopass[i]);
 			delim = 1;
+		}
+		fprintf(stdout, "\n");
+	}
+
+	if (wol->supported & WAKE_FILTER) {
+		int i, j;
+		int delim = 0;
+		fprintf(stdout, "        Filter(s) enabled: ");
+		for (i = 0; i < SOPASS_MAX; i++) {
+			for (j = 0; j < 8; j++) {
+				if (wol->sopass[i] & (1 << j)) {
+					fprintf(stdout, "%s%d", delim?",":"", i * 8 + j);
+					delim=1;
+				}
+			}
 		}
 		fprintf(stdout, "\n");
 	}
@@ -2897,6 +2941,15 @@ static int do_sset(struct cmd_context *ctx)
 				exit_bad_args();
 			get_mac_addr(argp[i], sopass_wanted);
 			sopass_change = 1;
+		} else if (!strcmp(argp[i], "filters")) {
+			gwol_changed = 1;
+			i++;
+			if (i >= argc)
+				exit_bad_args();
+			if (parse_sep_string_bitmap(argp[i], ',', 10,
+						    sopass_wanted, sizeof(sopass_wanted)))
+				exit_bad_args();
+			sopass_change = 1;
 		} else if (!strcmp(argp[i], "msglvl")) {
 			i++;
 			if (i >= argc)
@@ -3112,8 +3165,10 @@ static int do_sset(struct cmd_context *ctx)
 		if (err < 0) {
 			if (wol_change)
 				fprintf(stderr, "  not setting wol\n");
-			if (sopass_change)
+			if (sopass_change & wol.wolopts & WAKE_MAGICSECURE)
 				fprintf(stderr, "  not setting sopass\n");
+			if (sopass_change & wol.wolopts & WAKE_FILTER)
+				fprintf(stderr, "  not setting filters\n");
 		}
 	}
 
@@ -5066,6 +5121,7 @@ static const struct option {
 	  "		[ xcvr internal|external ]\n"
 	  "		[ wol p|u|m|b|a|g|s|d... ]\n"
 	  "		[ sopass %x:%x:%x:%x:%x:%x ]\n"
+	  "		[ filters %s ]\n"
 	  "		[ msglvl %d | msglvl type on|off ... ]\n" },
 	{ "-a|--show-pause", 1, do_gpause, "Show pause options" },
 	{ "-A|--pause", 1, do_spause, "Set pause options",

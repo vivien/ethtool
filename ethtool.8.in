@@ -58,7 +58,7 @@
 .\"
 .\"	\(*WO - wol flags
 .\"
-.ds WO \fBp\fP|\fBu\fP|\fBm\fP|\fBb\fP|\fBa\fP|\fBg\fP|\fBs\fP|\fBd\fP...
+.ds WO \fBp\fP|\fBu\fP|\fBm\fP|\fBb\fP|\fBa\fP|\fBg\fP|\fBs\fP|\fBf|\fBd\fP...
 .\"
 .\"	\(*FL - flow type values
 .\"
@@ -75,6 +75,10 @@
 .\"	\(*NC - Network Classifier type values
 .\"
 .ds NC \fBether\fP|\fBip4\fP|\fBtcp4\fP|\fBudp4\fP|\fBsctp4\fP|\fBah4\fP|\fBesp4\fP|\fBip6\fP|\fBtcp6\fP|\fBudp6\fP|\fBah6\fP|\fBesp6\fP|\fBsctp6\fP
+.\"
+.\"	\(*FI - Filter indexes comma separated list
+.\"
+.ds FI \fI0\fP\fB,\fI1\fB,\f...\fP
 ..
 .\"
 .\" Start URL.
@@ -239,6 +243,7 @@ ethtool \- query or control network driver and hardware settings
 .B2 xcvr internal external
 .RB [ wol \ \*(WO]
 .RB [ sopass \ \*(MA]
+.RB [ filters \ \*(FI]
 .RB [ msglvl
 .IR N \ |
 .BI msglvl \ type
@@ -679,6 +684,7 @@ b	Wake on broadcast messages
 a	Wake on ARP
 g	Wake on MagicPacket\[tm]
 s	Enable SecureOn\[tm] password for MagicPacket\[tm]
+f	Wake on filter ID
 d	T{
 Disable (wake on nothing).  This option clears all previous options.
 T}
@@ -687,6 +693,10 @@ T}
 .B sopass \*(MA
 Sets the SecureOn\[tm] password.  The argument to this option must be 6
 bytes in Ethernet MAC hex format (\*(MA).
+.TP
+.B filters \*(FI
+Sets the filters to be matched for Wake-on-LAN. The argument to this option
+must be a comma separated list of filter indexes. (\*(FI).
 .PP
 .BI msglvl \ N
 .br
