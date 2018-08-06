@@ -931,6 +931,9 @@ static int parse_wolopts(char *optstr, u32 *data)
 		case 's':
 			*data |= WAKE_MAGICSECURE;
 			break;
+		case 'f':
+			*data |= WAKE_FILTER;
+			break;
 		case 'd':
 			*data = 0;
 			break;
@@ -964,6 +967,8 @@ static char *unparse_wolopts(int wolopts)
 			*p++ = 'g';
 		if (wolopts & WAKE_MAGICSECURE)
 			*p++ = 's';
+		if (wolopts & WAKE_FILTER)
+			*p++ = 'f';
 	} else {
 		*p = 'd';
 	}
@@ -4224,7 +4229,7 @@ static int flow_spec_to_ntuple(struct ethtool_rx_flow_spec *fsp,
 		return -1;
 
 	/* verify ring cookie can transfer to action */
-	if (fsp->ring_cookie > INT_MAX && fsp->ring_cookie < (u64)(-2))
+	if (fsp->ring_cookie > INT_MAX && fsp->ring_cookie < (u64)(-3))
 		return -1;
 
 	/* verify only one field is setting data field */

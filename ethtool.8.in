@@ -58,7 +58,7 @@
 .\"
 .\"	\(*WO - wol flags
 .\"
-.ds WO \fBp\fP|\fBu\fP|\fBm\fP|\fBb\fP|\fBa\fP|\fBg\fP|\fBs\fP|\fBd\fP...
+.ds WO \fBp\fP|\fBu\fP|\fBm\fP|\fBb\fP|\fBa\fP|\fBg\fP|\fBs\fP|\fBd|\fBf\fP...
 .\"
 .\"	\(*FL - flow type values
 .\"
@@ -679,6 +679,7 @@ b	Wake on broadcast messages
 a	Wake on ARP
 g	Wake on MagicPacket\[tm]
 s	Enable SecureOn\[tm] password for MagicPacket\[tm]
+f	Wake on filter(s)
 d	T{
 Disable (wake on nothing).  This option clears all previous options.
 T}
@@ -870,6 +871,7 @@ Specifies the Rx queue to send packets to, or some other action.
 nokeep;
 lB	l.
 -1	Drop the matched flow
+-2	Use the matched flow as a Wake-on-LAN filter
 0 or higher	Rx queue to route the flow
 .TE
 .TP
